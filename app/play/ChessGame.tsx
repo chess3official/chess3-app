@@ -5,20 +5,71 @@ import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { makeAIMove } from './ChessAI';
 
+type TimeControl = '1+0' | '3+0' | '5+0' | '10+0' | '15+10' | '30+0' | 'unlimited';
+
+const TIME_CONTROLS: { [key in TimeControl]: { minutes: number; increment: number } } = {
+  '1+0': { minutes: 1, increment: 0 },
+  '3+0': { minutes: 3, increment: 0 },
+  '5+0': { minutes: 5, increment: 0 },
+  '10+0': { minutes: 10, increment: 0 },
+  '15+10': { minutes: 15, increment: 10 },
+  '30+0': { minutes: 30, increment: 0 },
+  'unlimited': { minutes: 0, increment: 0 },
+};
+
 export default function ChessGame() {
   const [game, setGame] = useState(new Chess());
   const [moveFrom, setMoveFrom] = useState('');
   const [optionSquares, setOptionSquares] = useState({});
-  const [testClicks, setTestClicks] = useState(0);
   const [vsAI, setVsAI] = useState(false);
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [aiThinking, setAiThinking] = useState(false);
   const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
+  const [timeControl, setTimeControl] = useState<TimeControl>('10+0');
+  const [whiteTime, setWhiteTime] = useState(600); // seconds
+  const [blackTime, setBlackTime] = useState(600); // seconds
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
   useEffect(() => {
     console.log('ChessGame component mounted!');
     console.log('Initial game position:', game.fen());
   }, []);
+
+  // Timer effect
+  useEffect(() => {
+    if (!isTimerActive || game.isGameOver() || timeControl === 'unlimited') return;
+
+    const interval = setInterval(() => {
+      if (game.turn() === 'w') {
+        setWhiteTime((prev) => {
+          if (prev <= 0) {
+            setIsTimerActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      } else {
+        setBlackTime((prev) => {
+          if (prev <= 0) {
+            setIsTimerActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isTimerActive, game, timeControl]);
+
+  // Start timer on first move
+  useEffect(() => {
+    if (!gameStarted && game.history().length > 0) {
+      setGameStarted(true);
+      setIsTimerActive(true);
+    }
+  }, [game, gameStarted]);
 
   // AI move effect
   useEffect(() => {
@@ -97,6 +148,15 @@ export default function ChessGame() {
         setGame(gameCopy);
         setMoveFrom('');
         setOptionSquares({});
+        // Add increment after move
+        if (timeControl !== 'unlimited') {
+          const increment = TIME_CONTROLS[timeControl].increment;
+          if (game.turn() === 'w') {
+            setWhiteTime((prev) => prev + increment);
+          } else {
+            setBlackTime((prev) => prev + increment);
+          }
+        }
         console.log('Move made:', move);
       } else {
         const hasMoveOptions = getMoveOptions(square);
@@ -129,6 +189,15 @@ export default function ChessGame() {
         setGame(gameCopy);
         setMoveFrom('');
         setOptionSquares({});
+        // Add increment after move
+        if (timeControl !== 'unlimited') {
+          const increment = TIME_CONTROLS[timeControl].increment;
+          if (game.turn() === 'w') {
+            setWhiteTime((prev) => prev + increment);
+          } else {
+            setBlackTime((prev) => prev + increment);
+          }
+        }
         console.log('Drop successful:', move);
         return true;
       }
@@ -140,175 +209,256 @@ export default function ChessGame() {
     }
   }
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleNewGame = () => {
+    setGame(new Chess());
+    setAiThinking(false);
+    setGameStarted(false);
+    setIsTimerActive(false);
+    const { minutes } = TIME_CONTROLS[timeControl];
+    setWhiteTime(minutes * 60);
+    setBlackTime(minutes * 60);
+  };
+
+  const handleTimeControlChange = (tc: TimeControl) => {
+    setTimeControl(tc);
+    const { minutes } = TIME_CONTROLS[tc];
+    setWhiteTime(minutes * 60);
+    setBlackTime(minutes * 60);
+  };
+
   return (
     <>
-      {/* Chess Board */}
-      <div className="max-w-2xl mx-auto">
-        <div 
-          className="rounded-xl overflow-hidden"
-          style={{
-            boxShadow: '0 0 60px rgba(139, 92, 246, 0.3)'
-          }}
-        >
-          <Chessboard
-            position={game.fen()}
-            onPieceDrop={onPieceDrop}
-            onSquareClick={onSquareClick}
-            customSquareStyles={optionSquares}
-            boardWidth={600}
-            customDarkSquareStyle={{ backgroundColor: '#3a3a3a' }}
-            customLightSquareStyle={{ backgroundColor: '#e8e8e8' }}
-          />
-        </div>
-
-        {/* Test Button */}
-        <div className="mt-6 text-center">
-          <div style={{ color: '#ffffff', marginBottom: '10px', fontSize: '18px' }}>
-            Component State Test: {testClicks}
+      {/* Game Status at Top */}
+      <div className="text-center mb-6">
+        {game.isGameOver() ? (
+          <div style={{ color: '#10B981', fontWeight: 'bold', fontSize: '24px' }}>
+            Game Over! {game.isCheckmate() ? 'Checkmate!' : 'Draw!'}
           </div>
-          <button
-            onClick={() => {
-              const newCount = testClicks + 1;
-              console.log('Test button clicked! New count:', newCount);
-              setTestClicks(newCount);
-            }}
-            className="px-4 py-2 rounded"
+        ) : (
+          <div style={{ color: '#a0a0a0', fontSize: '18px' }}>
+            {game.isCheck() && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>Check! </span>}
+          </div>
+        )}
+      </div>
+
+      {/* Main Game Layout */}
+      <div className="flex gap-6 items-start justify-center">
+        {/* Left Side - Turn Indicator */}
+        <div className="flex flex-col gap-4" style={{ width: '80px' }}>
+          {/* Black Turn Indicator */}
+          <div 
+            className="p-4 rounded-lg text-center transition-all"
             style={{
-              background: '#10B981',
-              color: '#ffffff',
-              marginBottom: '10px',
-              cursor: 'pointer',
-              border: 'none',
-              fontSize: '16px'
+              background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
+              border: game.turn() === 'b' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: game.turn() === 'b' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
             }}
           >
-            Click Me to Test (Clicks: {testClicks})
-          </button>
-          <div style={{ color: '#a0a0a0', fontSize: '12px', marginTop: '5px' }}>
-            If this counter doesn't change, React state isn't updating
+            <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚫</div>
+            <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>BLACK</div>
+          </div>
+
+          {/* White Turn Indicator */}
+          <div 
+            className="p-4 rounded-lg text-center transition-all"
+            style={{
+              background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
+              border: game.turn() === 'w' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: game.turn() === 'w' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
+            }}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚪</div>
+            <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>WHITE</div>
           </div>
         </div>
 
-        {/* Game Info */}
-        <div className="mt-6 text-center">
-          <p style={{ color: '#a0a0a0' }}>
-            {game.isGameOver() ? (
-              <span style={{ color: '#10B981', fontWeight: 'bold' }}>
-                Game Over! {game.isCheckmate() ? 'Checkmate!' : 'Draw!'}
-              </span>
-            ) : (
-              <span>
-                Turn: <span style={{ color: '#ffffff', fontWeight: 'bold' }}>
-                  {game.turn() === 'w' ? 'White' : 'Black'}
-                </span>
-                {game.isCheck() && <span style={{ color: '#ef4444' }}> (Check!)</span>}
-              </span>
-            )}
-          </p>
+        {/* Center - Chess Board */}
+        <div>
+          <div 
+            className="rounded-xl overflow-hidden"
+            style={{
+              boxShadow: '0 0 60px rgba(139, 92, 246, 0.3)'
+            }}
+          >
+            <Chessboard
+              position={game.fen()}
+              onPieceDrop={onPieceDrop}
+              onSquareClick={onSquareClick}
+              customSquareStyles={optionSquares}
+              boardWidth={480}
+              customDarkSquareStyle={{ backgroundColor: '#3a3a3a' }}
+              customLightSquareStyle={{ backgroundColor: '#e8e8e8' }}
+            />
+          </div>
         </div>
 
-        {/* AI Controls */}
-        <div className="mt-6 p-6 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '16px' }}>Play vs AI</span>
-            <button
-              onClick={() => {
-                setVsAI(!vsAI);
-                setGame(new Chess());
-                setAiThinking(false);
-              }}
-              className="px-4 py-2 rounded-lg transition-all"
-              style={{
-                background: vsAI ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              {vsAI ? 'ON' : 'OFF'}
-            </button>
+        {/* Right Side - Timer & Controls */}
+        <div style={{ width: '280px' }}>
+          {/* Timer */}
+          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="mb-3">
+              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>Black</div>
+              <div 
+                className="p-3 rounded-lg text-center"
+                style={{
+                  background: game.turn() === 'b' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  border: game.turn() === 'b' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
+                  color: blackTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace'
+                }}
+              >
+                {formatTime(blackTime)}
+              </div>
+            </div>
+            <div>
+              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>White</div>
+              <div 
+                className="p-3 rounded-lg text-center"
+                style={{
+                  background: game.turn() === 'w' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  border: game.turn() === 'w' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
+                  color: whiteTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace'
+                }}
+              >
+                {formatTime(whiteTime)}
+              </div>
+            </div>
           </div>
-          
-          {vsAI && (
-            <>
-              <div className="mb-4">
-                <label style={{ color: '#a0a0a0', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Difficulty</label>
-                <div className="flex gap-2">
-                  {(['easy', 'medium', 'hard'] as const).map((diff) => (
+
+          {/* Time Control Selection */}
+          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <label style={{ color: '#ffffff', fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Time Control</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['1+0', '3+0', '5+0', '10+0', '15+10', '30+0', 'unlimited'] as TimeControl[]).map((tc) => (
+                <button
+                  key={tc}
+                  onClick={() => handleTimeControlChange(tc)}
+                  disabled={gameStarted}
+                  className="px-3 py-2 rounded-lg transition-all"
+                  style={{
+                    background: timeControl === tc ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    border: 'none',
+                    cursor: gameStarted ? 'not-allowed' : 'pointer',
+                    opacity: gameStarted ? 0.5 : 1,
+                    fontSize: '13px'
+                  }}
+                >
+                  {tc === 'unlimited' ? '∞' : tc}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Controls */}
+          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '14px' }}>Play vs AI</span>
+              <button
+                onClick={() => {
+                  setVsAI(!vsAI);
+                  handleNewGame();
+                }}
+                className="px-3 py-1 rounded-lg transition-all"
+                style={{
+                  background: vsAI ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                {vsAI ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            
+            {vsAI && (
+              <>
+                <div className="mb-3">
+                  <label style={{ color: '#a0a0a0', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Difficulty</label>
+                  <div className="flex gap-2">
+                    {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                      <button
+                        key={diff}
+                        onClick={() => setAiDifficulty(diff)}
+                        className="px-3 py-1 rounded-lg transition-all flex-1"
+                        style={{
+                          background: aiDifficulty === diff ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                          color: '#ffffff',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textTransform: 'capitalize',
+                          fontSize: '12px'
+                        }}
+                      >
+                        {diff}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label style={{ color: '#a0a0a0', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Your Color</label>
+                  <div className="flex gap-2">
                     <button
-                      key={diff}
-                      onClick={() => setAiDifficulty(diff)}
-                      className="px-4 py-2 rounded-lg transition-all flex-1"
+                      onClick={() => {
+                        setPlayerColor('w');
+                        handleNewGame();
+                      }}
+                      className="px-3 py-1 rounded-lg transition-all flex-1"
                       style={{
-                        background: aiDifficulty === diff ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                        background: playerColor === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
                         color: '#ffffff',
                         border: 'none',
                         cursor: 'pointer',
-                        textTransform: 'capitalize'
+                        fontSize: '12px'
                       }}
                     >
-                      {diff}
+                      ⚪ White
                     </button>
-                  ))}
+                    <button
+                      onClick={() => {
+                        setPlayerColor('b');
+                        handleNewGame();
+                      }}
+                      className="px-3 py-1 rounded-lg transition-all flex-1"
+                      style={{
+                        background: playerColor === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                        color: '#ffffff',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      ⚫ Black
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label style={{ color: '#a0a0a0', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Your Color</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setPlayerColor('w');
-                      setGame(new Chess());
-                      setAiThinking(false);
-                    }}
-                    className="px-4 py-2 rounded-lg transition-all flex-1"
-                    style={{
-                      background: playerColor === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ⚪ White
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPlayerColor('b');
-                      const newGame = new Chess();
-                      setGame(newGame);
-                      setAiThinking(false);
-                    }}
-                    className="px-4 py-2 rounded-lg transition-all flex-1"
-                    style={{
-                      background: playerColor === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ⚫ Black
-                  </button>
-                </div>
-              </div>
-              
-              {aiThinking && (
-                <div className="mt-4 text-center" style={{ color: '#10B981' }}>
-                  🤖 AI is thinking...
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                
+                {aiThinking && (
+                  <div className="mt-3 text-center" style={{ color: '#10B981', fontSize: '12px' }}>
+                    🤖 AI is thinking...
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
-        {/* Reset Button */}
-        <div className="mt-6 text-center">
+          {/* New Game Button */}
           <button
-            onClick={() => {
-              setGame(new Chess());
-              setAiThinking(false);
-            }}
-            className="px-6 py-3 font-bold rounded-lg transition-all hover:scale-105"
+            onClick={handleNewGame}
+            className="w-full px-4 py-3 font-bold rounded-lg transition-all hover:scale-105"
             style={{
               background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
               color: '#ffffff',
