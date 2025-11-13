@@ -259,139 +259,8 @@ export default function ChessGame() {
 
       {/* Main Game Layout */}
       <div className="flex gap-6 items-start justify-center">
-        {/* Left Side - Turn Indicator */}
-        <div className="flex flex-col gap-4" style={{ width: '80px' }}>
-          {/* Black Turn Indicator */}
-          <div 
-            className="p-4 rounded-lg text-center transition-all"
-            style={{
-              background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
-              border: game.turn() === 'b' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: game.turn() === 'b' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
-            }}
-          >
-            <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚫</div>
-            <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>BLACK</div>
-          </div>
-
-          {/* White Turn Indicator */}
-          <div 
-            className="p-4 rounded-lg text-center transition-all"
-            style={{
-              background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
-              border: game.turn() === 'w' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: game.turn() === 'w' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
-            }}
-          >
-            <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚪</div>
-            <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>WHITE</div>
-          </div>
-        </div>
-
-        {/* Center - Chess Board */}
-        <div>
-          <div 
-            className="rounded-xl overflow-hidden"
-            style={{
-              boxShadow: '0 0 60px rgba(139, 92, 246, 0.3)'
-            }}
-          >
-            <Chessboard
-              position={game.fen()}
-              onPieceDrop={onPieceDrop}
-              onPieceDragBegin={onPieceDragBegin}
-              onPieceDragEnd={onPieceDragEnd}
-              onSquareClick={onSquareClick}
-              customSquareStyles={optionSquares}
-              boardWidth={480}
-              customDarkSquareStyle={{ backgroundColor: '#3a3a3a' }}
-              customLightSquareStyle={{ backgroundColor: '#e8e8e8' }}
-              customPieces={alienzMode ? {
-                wP: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♙</div>,
-                wN: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♘</div>,
-                wB: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♗</div>,
-                wR: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♖</div>,
-                wQ: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♕</div>,
-                wK: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♔</div>,
-                bP: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♟</div>,
-                bN: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♞</div>,
-                bB: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♝</div>,
-                bR: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♜</div>,
-                bQ: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♛</div>,
-                bK: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♚</div>,
-              } : undefined}
-            />
-          </div>
-        </div>
-
-        {/* Right Side - Timer & Controls */}
+        {/* Left Side - Controls & Turn Indicator */}
         <div style={{ width: '280px' }}>
-          {/* Timer */}
-          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <div className="mb-3">
-              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>Black</div>
-              <div 
-                className="p-3 rounded-lg text-center"
-                style={{
-                  background: game.turn() === 'b' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  border: game.turn() === 'b' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
-                  color: blackTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  fontFamily: 'monospace'
-                }}
-              >
-                {formatTime(blackTime)}
-              </div>
-            </div>
-            <div>
-              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>White</div>
-              <div 
-                className="p-3 rounded-lg text-center"
-                style={{
-                  background: game.turn() === 'w' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  border: game.turn() === 'w' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
-                  color: whiteTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  fontFamily: 'monospace'
-                }}
-              >
-                {formatTime(whiteTime)}
-              </div>
-            </div>
-          </div>
-
-          {/* Time Control Selection */}
-          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <label style={{ color: '#ffffff', fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Time Control</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['1+0', '3+0', '5+0', '10+0', '15+10', '30+0', 'unlimited'] as TimeControl[]).map((tc) => (
-                <button
-                  key={tc}
-                  onClick={() => handleTimeControlChange(tc)}
-                  disabled={gameStarted}
-                  className="px-3 py-2 rounded-lg transition-all"
-                  style={{
-                    background: timeControl === tc ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
-                    border: 'none',
-                    cursor: gameStarted ? 'not-allowed' : 'pointer',
-                    opacity: gameStarted ? 0.5 : 1,
-                    fontSize: '11px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '2px'
-                  }}
-                >
-                  <span style={{ fontWeight: 'bold' }}>{tc === 'unlimited' ? '∞' : tc}</span>
-                  <span style={{ fontSize: '9px', opacity: 0.7 }}>{TIME_CONTROLS[tc].name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Alienz Mode Toggle */}
           <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
             <div className="flex items-center justify-between">
@@ -512,7 +381,7 @@ export default function ChessGame() {
           {/* New Game Button */}
           <button
             onClick={handleNewGame}
-            className="w-full px-4 py-3 font-bold rounded-lg transition-all hover:scale-105"
+            className="w-full px-4 py-3 font-bold rounded-lg transition-all hover:scale-105 mb-4"
             style={{
               background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
               color: '#ffffff',
@@ -522,6 +391,141 @@ export default function ChessGame() {
           >
             New Game
           </button>
+
+          {/* Turn Indicators */}
+          <div className="flex flex-col gap-4">
+            {/* Black Turn Indicator */}
+            <div 
+              className="p-4 rounded-lg text-center transition-all"
+              style={{
+                background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
+                border: game.turn() === 'b' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: game.turn() === 'b' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
+              }}
+            >
+              <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚫</div>
+              <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>BLACK</div>
+            </div>
+
+            {/* White Turn Indicator */}
+            <div 
+              className="p-4 rounded-lg text-center transition-all"
+              style={{
+                background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
+                border: game.turn() === 'w' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: game.turn() === 'w' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
+              }}
+            >
+              <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚪</div>
+              <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>WHITE</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Center - Chess Board */}
+        <div>
+          <div 
+            className="rounded-xl overflow-hidden"
+            style={{
+              boxShadow: '0 0 60px rgba(139, 92, 246, 0.3)'
+            }}
+          >
+            <Chessboard
+              position={game.fen()}
+              onPieceDrop={onPieceDrop}
+              onPieceDragBegin={onPieceDragBegin}
+              onPieceDragEnd={onPieceDragEnd}
+              onSquareClick={onSquareClick}
+              customSquareStyles={optionSquares}
+              boardWidth={480}
+              customDarkSquareStyle={{ backgroundColor: '#3a3a3a' }}
+              customLightSquareStyle={{ backgroundColor: '#e8e8e8' }}
+              customPieces={alienzMode ? {
+                wP: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♙</div>,
+                wN: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♘</div>,
+                wB: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♗</div>,
+                wR: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♖</div>,
+                wQ: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♕</div>,
+                wK: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♔</div>,
+                bP: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♟</div>,
+                bN: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♞</div>,
+                bB: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♝</div>,
+                bR: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♜</div>,
+                bQ: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♛</div>,
+                bK: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♚</div>,
+              } : undefined}
+            />
+          </div>
+        </div>
+
+        {/* Right Side - Timer & Controls */}
+        <div style={{ width: '280px' }}>
+          {/* Timer */}
+          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="mb-3">
+              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>Black</div>
+              <div 
+                className="p-3 rounded-lg text-center"
+                style={{
+                  background: game.turn() === 'b' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  border: game.turn() === 'b' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
+                  color: blackTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace'
+                }}
+              >
+                {formatTime(blackTime)}
+              </div>
+            </div>
+            <div>
+              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>White</div>
+              <div 
+                className="p-3 rounded-lg text-center"
+                style={{
+                  background: game.turn() === 'w' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  border: game.turn() === 'w' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
+                  color: whiteTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace'
+                }}
+              >
+                {formatTime(whiteTime)}
+              </div>
+            </div>
+          </div>
+
+          {/* Time Control Selection */}
+          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <label style={{ color: '#ffffff', fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Time Control</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['1+0', '3+0', '5+0', '10+0', '15+10', '30+0', 'unlimited'] as TimeControl[]).map((tc) => (
+                <button
+                  key={tc}
+                  onClick={() => handleTimeControlChange(tc)}
+                  disabled={gameStarted}
+                  className="px-3 py-2 rounded-lg transition-all"
+                  style={{
+                    background: timeControl === tc ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    border: 'none',
+                    cursor: gameStarted ? 'not-allowed' : 'pointer',
+                    opacity: gameStarted ? 0.5 : 1,
+                    fontSize: '11px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px'
+                  }}
+                >
+                  <span style={{ fontWeight: 'bold' }}>{tc === 'unlimited' ? '∞' : tc}</span>
+                  <span style={{ fontSize: '9px', opacity: 0.7 }}>{TIME_CONTROLS[tc].name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
     </>
