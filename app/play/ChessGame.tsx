@@ -7,14 +7,14 @@ import { makeAIMove } from './ChessAI';
 
 type TimeControl = '1+0' | '3+0' | '5+0' | '10+0' | '15+10' | '30+0' | 'unlimited';
 
-const TIME_CONTROLS: { [key in TimeControl]: { minutes: number; increment: number } } = {
-  '1+0': { minutes: 1, increment: 0 },
-  '3+0': { minutes: 3, increment: 0 },
-  '5+0': { minutes: 5, increment: 0 },
-  '10+0': { minutes: 10, increment: 0 },
-  '15+10': { minutes: 15, increment: 10 },
-  '30+0': { minutes: 30, increment: 0 },
-  'unlimited': { minutes: 0, increment: 0 },
+const TIME_CONTROLS: { [key in TimeControl]: { minutes: number; increment: number; name: string } } = {
+  '1+0': { minutes: 1, increment: 0, name: 'Bullet' },
+  '3+0': { minutes: 3, increment: 0, name: 'Blitz' },
+  '5+0': { minutes: 5, increment: 0, name: 'Blitz' },
+  '10+0': { minutes: 10, increment: 0, name: 'Rapid' },
+  '15+10': { minutes: 15, increment: 10, name: 'Rapid' },
+  '30+0': { minutes: 30, increment: 0, name: 'Classical' },
+  'unlimited': { minutes: 0, increment: 0, name: 'Unlimited' },
 };
 
 export default function ChessGame() {
@@ -30,6 +30,7 @@ export default function ChessGame() {
   const [blackTime, setBlackTime] = useState(600); // seconds
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [alienzMode, setAlienzMode] = useState(false);
 
   useEffect(() => {
     console.log('ChessGame component mounted!');
@@ -169,6 +170,15 @@ export default function ChessGame() {
     }
   }
 
+  function onPieceDragBegin(piece: string, sourceSquare: string) {
+    console.log('Piece drag begin:', piece, sourceSquare);
+    getMoveOptions(sourceSquare);
+  }
+
+  function onPieceDragEnd() {
+    setOptionSquares({});
+  }
+
   function onPieceDrop(sourceSquare: string, targetSquare: string) {
     console.log('Piece dropped from', sourceSquare, 'to', targetSquare);
     
@@ -289,11 +299,27 @@ export default function ChessGame() {
             <Chessboard
               position={game.fen()}
               onPieceDrop={onPieceDrop}
+              onPieceDragBegin={onPieceDragBegin}
+              onPieceDragEnd={onPieceDragEnd}
               onSquareClick={onSquareClick}
               customSquareStyles={optionSquares}
               boardWidth={480}
               customDarkSquareStyle={{ backgroundColor: '#3a3a3a' }}
               customLightSquareStyle={{ backgroundColor: '#e8e8e8' }}
+              customPieces={alienzMode ? {
+                wP: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♙</div>,
+                wN: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♘</div>,
+                wB: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♗</div>,
+                wR: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♖</div>,
+                wQ: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♕</div>,
+                wK: () => <div style={{ fontSize: '40px', color: '#10B981' }}>♔</div>,
+                bP: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♟</div>,
+                bN: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♞</div>,
+                bB: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♝</div>,
+                bR: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♜</div>,
+                bQ: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♛</div>,
+                bK: () => <div style={{ fontSize: '40px', color: '#8B5CF6' }}>♚</div>,
+              } : undefined}
             />
           </div>
         </div>
@@ -352,12 +378,40 @@ export default function ChessGame() {
                     border: 'none',
                     cursor: gameStarted ? 'not-allowed' : 'pointer',
                     opacity: gameStarted ? 0.5 : 1,
-                    fontSize: '13px'
+                    fontSize: '11px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px'
                   }}
                 >
-                  {tc === 'unlimited' ? '∞' : tc}
+                  <span style={{ fontWeight: 'bold' }}>{tc === 'unlimited' ? '∞' : tc}</span>
+                  <span style={{ fontSize: '9px', opacity: 0.7 }}>{TIME_CONTROLS[tc].name}</span>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Alienz Mode Toggle */}
+          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '14px' }}>Alienz Mode</span>
+                <div style={{ color: '#a0a0a0', fontSize: '10px', marginTop: '2px' }}>Green vs Purple</div>
+              </div>
+              <button
+                onClick={() => setAlienzMode(!alienzMode)}
+                className="px-3 py-1 rounded-lg transition-all"
+                style={{
+                  background: alienzMode ? 'linear-gradient(135deg, #10B981 0%, #8B5CF6 100%)' : 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                {alienzMode ? 'ON' : 'OFF'}
+              </button>
             </div>
           </div>
 
