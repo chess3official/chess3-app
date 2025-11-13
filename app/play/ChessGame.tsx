@@ -466,7 +466,13 @@ export default function ChessGame() {
                 wR: ({ squareWidth }: any) => (
                   <div style={{ width: squareWidth, height: squareWidth, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 45 45" style={{ width: '100%', height: '100%' }}>
-                      <path d="M9 39h27v-3H9v3zm3-3v-4h21v4H12zm-1-22V9h4v2h5V9h5v2h5V9h4v5H11zm0 3c0-1.1.9-2 2-2h17c1.1 0 2 .9 2 2v9H11v-9z" fill="#10B981" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <g fill="#10B981" fillRule="evenodd" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 39h27v-3H9v3zM12 36v-4h21v4H12zM11 14V9h4v2h5V9h5v2h5V9h4v5H11z" strokeLinecap="butt"/>
+                        <path d="M34 14l-3 3H14l-3-3"/>
+                        <path d="M31 17v12.5H14V17" strokeLinecap="butt" strokeLinejoin="miter"/>
+                        <path d="M31 29.5l1.5 2.5h-20l1.5-2.5"/>
+                        <path d="M11 14h23" fill="none" strokeLinejoin="miter"/>
+                      </g>
                     </svg>
                   </div>
                 ),
@@ -513,7 +519,13 @@ export default function ChessGame() {
                 bR: ({ squareWidth }: any) => (
                   <div style={{ width: squareWidth, height: squareWidth, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 45 45" style={{ width: '100%', height: '100%' }}>
-                      <path d="M9 39h27v-3H9v3zm3-3v-4h21v4H12zm-1-22V9h4v2h5V9h5v2h5V9h4v5H11zm0 3c0-1.1.9-2 2-2h17c1.1 0 2 .9 2 2v9H11v-9z" fill="#8B5CF6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <g fill="#8B5CF6" fillRule="evenodd" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 39h27v-3H9v3zM12 36v-4h21v4H12zM11 14V9h4v2h5V9h5v2h5V9h4v5H11z" strokeLinecap="butt"/>
+                        <path d="M34 14l-3 3H14l-3-3"/>
+                        <path d="M31 17v12.5H14V17" strokeLinecap="butt" strokeLinejoin="miter"/>
+                        <path d="M31 29.5l1.5 2.5h-20l1.5-2.5"/>
+                        <path d="M11 14h23" fill="none" strokeLinejoin="miter"/>
+                      </g>
                     </svg>
                   </div>
                 ),
