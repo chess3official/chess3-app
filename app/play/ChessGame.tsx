@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { makeAIMove } from './ChessAI';
@@ -31,6 +31,12 @@ export default function ChessGame() {
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [alienzMode, setAlienzMode] = useState(false);
+  const [onlineMode, setOnlineMode] = useState(false);
+  const [onlineGameId, setOnlineGameId] = useState('');
+  const [onlineColor, setOnlineColor] = useState<'w' | 'b' | null>(null);
+  const [onlineStatus, setOnlineStatus] = useState('');
+  const [joinGameId, setJoinGameId] = useState('');
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     console.log('ChessGame component mounted!');
@@ -74,7 +80,7 @@ export default function ChessGame() {
 
   // AI move effect
   useEffect(() => {
-    if (vsAI && game.turn() !== playerColor && !game.isGameOver() && !aiThinking) {
+    if (vsAI && !onlineMode && game.turn() !== playerColor && !game.isGameOver() && !aiThinking) {
       setAiThinking(true);
       makeAIMove(game, aiDifficulty, 800).then((move: any) => {
         if (move) {
@@ -86,6 +92,98 @@ export default function ChessGame() {
       });
     }
   }, [game, vsAI, playerColor, aiDifficulty, aiThinking]);
+
+  // Online mode: open / close WebSocket connection
+  useEffect(() => {
+    if (!onlineMode) {
+      // Turning off online mode: close socket and reset online-specific state
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
+      wsRef.current = null;
+      setOnlineGameId('');
+      setOnlineColor(null);
+      setOnlineStatus('');
+      return;
+    }
+
+    const ws = new WebSocket('wss://chess3-multiplayer-server-production.up.railway.app/');
+    wsRef.current = ws;
+    setOnlineStatus('Connecting...');
+
+    ws.onopen = () => {
+      setOnlineStatus('Connected');
+    };
+
+    ws.onclose = () => {
+      setOnlineStatus((prev) => (prev ? prev + ' (disconnected)' : 'Disconnected'));
+    };
+
+    ws.onerror = () => {
+      setOnlineStatus('Connection error');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (!msg || typeof msg !== 'object') return;
+
+        switch (msg.type) {
+          case 'connected': {
+            // Initial handshake from server
+            break;
+          }
+          case 'game_created': {
+            setOnlineGameId(msg.gameId || '');
+            setOnlineColor('w');
+            setOnlineStatus('Game created. Share the code with your opponent.');
+            if (msg.fen) {
+              setGame(new Chess(msg.fen));
+            } else {
+              setGame(new Chess());
+            }
+            break;
+          }
+          case 'game_joined': {
+            if (msg.gameId) setOnlineGameId(msg.gameId);
+            if (msg.color === 'w' || msg.color === 'b') setOnlineColor(msg.color);
+            if (msg.fen) {
+              setGame(new Chess(msg.fen));
+            }
+            setOnlineStatus('Joined game. Waiting for moves...');
+            break;
+          }
+          case 'opponent_joined': {
+            setOnlineStatus('Opponent joined. Game in progress.');
+            break;
+          }
+          case 'move_made': {
+            if (msg.fen) {
+              setGame(new Chess(msg.fen));
+            }
+            if (msg.isGameOver) {
+              if (msg.isCheckmate) setOnlineStatus('Game over: Checkmate');
+              else if (msg.isDraw) setOnlineStatus('Game over: Draw');
+              else setOnlineStatus('Game over');
+            }
+            break;
+          }
+          case 'error': {
+            if (msg.message) setOnlineStatus(`Error: ${msg.message}`);
+            break;
+          }
+        }
+      } catch (e) {
+        // Ignore malformed messages
+      }
+    };
+
+    return () => {
+      if (wsRef.current === ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [onlineMode, setGame]);
 
   function getMoveOptions(square: string) {
     const moves = game.moves({
@@ -120,8 +218,8 @@ export default function ChessGame() {
   function onSquareClick(square: string) {
     console.log('Square clicked:', square);
     
-    // Prevent moves when AI is thinking or it's not player's turn
-    if (aiThinking || (vsAI && game.turn() !== playerColor)) {
+    // Prevent moves when AI is thinking or it's not player's turn (offline / vs AI)
+    if (!onlineMode && (aiThinking || (vsAI && game.turn() !== playerColor))) {
       return;
     }
     
@@ -138,6 +236,31 @@ export default function ChessGame() {
     }
 
     try {
+      // Online mode: send move to server instead of applying locally
+      if (onlineMode) {
+        const ws = wsRef.current;
+        if (!ws || ws.readyState !== WebSocket.OPEN || !onlineGameId || !onlineColor) {
+          return;
+        }
+        if (game.turn() !== onlineColor) {
+          return;
+        }
+
+        ws.send(
+          JSON.stringify({
+            type: 'make_move',
+            gameId: onlineGameId,
+            from: moveFrom,
+            to: square,
+            promotion: 'q',
+          })
+        );
+
+        setMoveFrom('');
+        setOptionSquares({});
+        return;
+      }
+
       const gameCopy = new Chess(game.fen());
       const move = gameCopy.move({
         from: moveFrom as any,
@@ -182,11 +305,36 @@ export default function ChessGame() {
   function onPieceDrop(sourceSquare: string, targetSquare: string) {
     console.log('Piece dropped from', sourceSquare, 'to', targetSquare);
     
-    // Prevent moves when AI is thinking or it's not player's turn
-    if (aiThinking || (vsAI && game.turn() !== playerColor)) {
+    // Prevent moves when AI is thinking or it's not player's turn (offline / vs AI)
+    if (!onlineMode && (aiThinking || (vsAI && game.turn() !== playerColor))) {
       return false;
     }
-    
+
+    // Online mode: send move to server instead of applying locally
+    if (onlineMode) {
+      const ws = wsRef.current;
+      if (!ws || ws.readyState !== WebSocket.OPEN || !onlineGameId || !onlineColor) {
+        return false;
+      }
+      if (game.turn() !== onlineColor) {
+        return false;
+      }
+
+      ws.send(
+        JSON.stringify({
+          type: 'make_move',
+          gameId: onlineGameId,
+          from: sourceSquare,
+          to: targetSquare,
+          promotion: 'q',
+        })
+      );
+
+      setMoveFrom('');
+      setOptionSquares({});
+      return true;
+    }
+
     try {
       const gameCopy = new Chess(game.fen());
       const move = gameCopy.move({
@@ -261,51 +409,54 @@ export default function ChessGame() {
       <div className="flex gap-4 items-start justify-center">
         {/* Left Side - Controls & Turn Indicator */}
         <div style={{ width: '210px' }}>
-          {/* Alienz Mode Toggle */}
-          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>Alienz Mode</span>
-                <div style={{ color: '#a0a0a0', fontSize: '9px', marginTop: '2px' }}>Green vs Purple</div>
-              </div>
+          {/* Top Row: Alienz Mode + Play vs AI */}
+          <div className="mb-3 flex gap-2">
+            {/* Alienz Mode Toggle */}
+            <div className="flex-1 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
               <button
                 onClick={() => setAlienzMode(!alienzMode)}
-                className="px-2 py-1 rounded-lg transition-all"
+                className="w-full px-2 py-1 rounded-lg transition-all flex flex-col items-center"
                 style={{
                   background: alienzMode ? 'linear-gradient(135deg, #10B981 0%, #8B5CF6 100%)' : 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '11px'
+                  fontSize: '10px'
                 }}
               >
-                {alienzMode ? 'ON' : 'OFF'}
+                <span style={{ fontWeight: 'bold', fontSize: '11px' }}>Alienz</span>
+                <span style={{ fontSize: '9px', opacity: 0.8 }}>Mode</span>
               </button>
             </div>
-          </div>
 
-          {/* AI Controls */}
-          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <div className="flex items-center justify-between mb-2">
-              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>Play vs AI</span>
+            {/* Play vs AI Toggle (compact) */}
+            <div className="flex-1 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
               <button
                 onClick={() => {
                   setVsAI(!vsAI);
                   handleNewGame();
                 }}
-                className="px-2 py-1 rounded-lg transition-all"
+                className="w-full px-2 py-1 rounded-lg transition-all flex flex-col items-center"
                 style={{
                   background: vsAI ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '11px'
+                  fontSize: '10px'
                 }}
               >
-                {vsAI ? 'ON' : 'OFF'}
+                <span style={{ fontWeight: 'bold', fontSize: '11px' }}>Play vs</span>
+                <span style={{ fontSize: '9px', opacity: 0.8 }}>AI</span>
               </button>
             </div>
-            
+          </div>
+
+          {/* AI Controls (detail) */}
+          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>AI Settings</span>
+            </div>
+
             {vsAI && (
               <>
                 <div className="mb-2">
@@ -392,32 +543,147 @@ export default function ChessGame() {
             New Game
           </button>
 
+          {/* Online Multiplayer */}
+          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>Online</span>
+              <button
+                onClick={() => {
+                  const next = !onlineMode;
+                  setOnlineMode(next);
+                  if (next) {
+                    // Ensure AI is off when going online
+                    setVsAI(false);
+                    setAiThinking(false);
+                  }
+                }}
+                className="px-2 py-1 rounded-lg transition-all"
+                style={{
+                  background: onlineMode ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                }}
+              >
+                {onlineMode ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            {onlineMode && (
+              <>
+                <div className="flex gap-2 mb-2">
+                  <button
+                    onClick={() => {
+                      const ws = wsRef.current;
+                      if (!ws || ws.readyState !== WebSocket.OPEN) {
+                        setOnlineStatus('Not connected to server');
+                        return;
+                      }
+                      ws.send(JSON.stringify({ type: 'create_game' }));
+                      setOnlineStatus('Creating game...');
+                    }}
+                    className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                    }}
+                  >
+                    Create
+                  </button>
+                  <button
+                    onClick={() => {
+                      const ws = wsRef.current;
+                      if (!ws || ws.readyState !== WebSocket.OPEN) {
+                        setOnlineStatus('Not connected to server');
+                        return;
+                      }
+                      if (!joinGameId.trim()) {
+                        setOnlineStatus('Enter a game code to join');
+                        return;
+                      }
+                      ws.send(
+                        JSON.stringify({
+                          type: 'join_game',
+                          gameId: joinGameId.trim().toUpperCase(),
+                        })
+                      );
+                      setOnlineStatus('Joining game...');
+                    }}
+                    className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                    }}
+                  >
+                    Join
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  value={joinGameId}
+                  onChange={(e) => setJoinGameId(e.target.value)}
+                  placeholder="Game code"
+                  className="w-full mb-2 px-2 py-1 rounded bg-transparent text-xs outline-none"
+                  style={{
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                  }}
+                />
+
+                {onlineGameId && (
+                  <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '2px' }}>
+                    Game code: <span style={{ color: '#ffffff' }}>{onlineGameId}</span>
+                  </div>
+                )}
+
+                {onlineColor && (
+                  <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '2px' }}>
+                    You are: <span style={{ color: '#ffffff' }}>{onlineColor === 'w' ? 'White' : 'Black'}</span>
+                  </div>
+                )}
+
+                {onlineStatus && (
+                  <div style={{ color: '#a0a0a0', fontSize: '10px' }}>{onlineStatus}</div>
+                )}
+              </>
+            )}
+          </div>
+
           {/* Turn Indicators */}
-          <div className="flex flex-col gap-2.5">
+          <div className="flex gap-2.5 mt-2">
             {/* Black Turn Indicator */}
             <div 
-              className="px-2 py-2 rounded-lg text-center transition-all"
+              className="flex-1 px-2 py-2 rounded-lg text-center transition-all"
               style={{
                 background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
                 border: game.turn() === 'b' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
                 boxShadow: game.turn() === 'b' ? '0 0 14px rgba(139, 92, 246, 0.4)' : 'none'
               }}
             >
-              <div style={{ fontSize: '22px', marginBottom: '2px' }}>⚫</div>
-              <div style={{ color: '#ffffff', fontSize: '11px', fontWeight: 'bold' }}>BLACK</div>
+              <div style={{ fontSize: '18px', marginBottom: '2px' }}>⚫</div>
+              <div style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold' }}>BLACK</div>
             </div>
 
             {/* White Turn Indicator */}
             <div 
-              className="px-2 py-2 rounded-lg text-center transition-all"
+              className="flex-1 px-2 py-2 rounded-lg text-center transition-all"
               style={{
                 background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
                 border: game.turn() === 'w' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
                 boxShadow: game.turn() === 'w' ? '0 0 14px rgba(139, 92, 246, 0.4)' : 'none'
               }}
             >
-              <div style={{ fontSize: '22px', marginBottom: '2px' }}>⚪</div>
-              <div style={{ color: '#ffffff', fontSize: '11px', fontWeight: 'bold' }}>WHITE</div>
+              <div style={{ fontSize: '18px', marginBottom: '2px' }}>⚪</div>
+              <div style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold' }}>WHITE</div>
             </div>
           </div>
         </div>

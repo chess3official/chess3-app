@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "start:server": "node server/multiplayer-server.js"
   },
   "dependencies": {
     "@solana/wallet-adapter-base": "^0.9.27",
@@ -23,7 +24,8 @@
     "react-chessboard": "^4.6.0",
     "react-dom": "19.2.0",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
