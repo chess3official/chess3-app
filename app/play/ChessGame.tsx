@@ -409,6 +409,121 @@ export default function ChessGame() {
       <div className="flex gap-4 items-start justify-center">
         {/* Left Side - Controls & Turn Indicator */}
         <div style={{ width: '210px' }}>
+          {/* Online Multiplayer */}
+          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>Online</span>
+              <button
+                onClick={() => {
+                  const next = !onlineMode;
+                  setOnlineMode(next);
+                  if (next) {
+                    // Ensure AI is off when going online
+                    setVsAI(false);
+                    setAiThinking(false);
+                  }
+                }}
+                className="px-2 py-1 rounded-lg transition-all"
+                style={{
+                  background: onlineMode ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                }}
+              >
+                {onlineMode ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            {onlineMode && (
+              <>
+                <div className="flex gap-2 mb-2">
+                  <button
+                    onClick={() => {
+                      const ws = wsRef.current;
+                      if (!ws || ws.readyState !== WebSocket.OPEN) {
+                        setOnlineStatus('Not connected to server');
+                        return;
+                      }
+                      ws.send(JSON.stringify({ type: 'create_game' }));
+                      setOnlineStatus('Creating game...');
+                    }}
+                    className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                    }}
+                  >
+                    Create
+                  </button>
+                  <button
+                    onClick={() => {
+                      const ws = wsRef.current;
+                      if (!ws || ws.readyState !== WebSocket.OPEN) {
+                        setOnlineStatus('Not connected to server');
+                        return;
+                      }
+                      if (!joinGameId.trim()) {
+                        setOnlineStatus('Enter a game code to join');
+                        return;
+                      }
+                      ws.send(
+                        JSON.stringify({
+                          type: 'join_game',
+                          gameId: joinGameId.trim().toUpperCase(),
+                        })
+                      );
+                      setOnlineStatus('Joining game...');
+                    }}
+                    className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                    }}
+                  >
+                    Join
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  value={joinGameId}
+                  onChange={(e) => setJoinGameId(e.target.value)}
+                  placeholder="Game code"
+                  className="w-full mb-2 px-2 py-1 rounded bg-transparent text-xs outline-none"
+                  style={{
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                  }}
+                />
+
+                {onlineGameId && (
+                  <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '2px' }}>
+                    Game code: <span style={{ color: '#ffffff' }}>{onlineGameId}</span>
+                  </div>
+                )}
+
+                {onlineColor && (
+                  <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '2px' }}>
+                    You are: <span style={{ color: '#ffffff' }}>{onlineColor === 'w' ? 'White' : 'Black'}</span>
+                  </div>
+                )}
+
+                {onlineStatus && (
+                  <div style={{ color: '#a0a0a0', fontSize: '10px' }}>{onlineStatus}</div>
+                )}
+              </>
+            )}
+          </div>
+
           {/* Top Row: Alienz Mode + Play vs AI */}
           <div className="mb-3 flex gap-2">
             {/* Alienz Mode Toggle */}
@@ -543,147 +658,30 @@ export default function ChessGame() {
             New Game
           </button>
 
-          {/* Online Multiplayer */}
-          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <div className="flex items-center justify-between mb-2">
-              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>Online</span>
-              <button
-                onClick={() => {
-                  const next = !onlineMode;
-                  setOnlineMode(next);
-                  if (next) {
-                    // Ensure AI is off when going online
-                    setVsAI(false);
-                    setAiThinking(false);
-                  }
-                }}
-                className="px-2 py-1 rounded-lg transition-all"
-                style={{
-                  background: onlineMode ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
-                  color: '#ffffff',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '10px',
-                }}
-              >
-                {onlineMode ? 'ON' : 'OFF'}
-              </button>
-            </div>
-
-            {onlineMode && (
-              <>
-                <div className="flex gap-2 mb-2">
-                  <button
-                    onClick={() => {
-                      const ws = wsRef.current;
-                      if (!ws || ws.readyState !== WebSocket.OPEN) {
-                        setOnlineStatus('Not connected to server');
-                        return;
-                      }
-                      ws.send(JSON.stringify({ type: 'create_game' }));
-                      setOnlineStatus('Creating game...');
-                    }}
-                    className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      color: '#ffffff',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                    }}
-                  >
-                    Create
-                  </button>
-                  <button
-                    onClick={() => {
-                      const ws = wsRef.current;
-                      if (!ws || ws.readyState !== WebSocket.OPEN) {
-                        setOnlineStatus('Not connected to server');
-                        return;
-                      }
-                      if (!joinGameId.trim()) {
-                        setOnlineStatus('Enter a game code to join');
-                        return;
-                      }
-                      ws.send(
-                        JSON.stringify({
-                          type: 'join_game',
-                          gameId: joinGameId.trim().toUpperCase(),
-                        })
-                      );
-                      setOnlineStatus('Joining game...');
-                    }}
-                    className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      color: '#ffffff',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                    }}
-                  >
-                    Join
-                  </button>
-                </div>
-
-                <input
-                  type="text"
-                  value={joinGameId}
-                  onChange={(e) => setJoinGameId(e.target.value)}
-                  placeholder="Game code"
-                  className="w-full mb-2 px-2 py-1 rounded bg-transparent text-xs outline-none"
-                  style={{
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                  }}
-                />
-
-                {onlineGameId && (
-                  <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '2px' }}>
-                    Game code: <span style={{ color: '#ffffff' }}>{onlineGameId}</span>
-                  </div>
-                )}
-
-                {onlineColor && (
-                  <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '2px' }}>
-                    You are: <span style={{ color: '#ffffff' }}>{onlineColor === 'w' ? 'White' : 'Black'}</span>
-                  </div>
-                )}
-
-                {onlineStatus && (
-                  <div style={{ color: '#a0a0a0', fontSize: '10px' }}>{onlineStatus}</div>
-                )}
-              </>
-            )}
-          </div>
-
           {/* Turn Indicators */}
           <div className="flex gap-2.5 mt-2">
             {/* Black Turn Indicator */}
             <div 
-              className="flex-1 px-2 py-2 rounded-lg text-center transition-all"
+              className="flex-1 px-2 py-1 rounded-lg text-center transition-all"
               style={{
                 background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
                 border: game.turn() === 'b' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: game.turn() === 'b' ? '0 0 14px rgba(139, 92, 246, 0.4)' : 'none'
+                boxShadow: game.turn() === 'b' ? '0 0 10px rgba(139, 92, 246, 0.35)' : 'none'
               }}
             >
-              <div style={{ fontSize: '18px', marginBottom: '2px' }}>⚫</div>
-              <div style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold' }}>BLACK</div>
+              <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>BLACK</span>
             </div>
 
             {/* White Turn Indicator */}
             <div 
-              className="flex-1 px-2 py-2 rounded-lg text-center transition-all"
+              className="flex-1 px-2 py-1 rounded-lg text-center transition-all"
               style={{
                 background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
                 border: game.turn() === 'w' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: game.turn() === 'w' ? '0 0 14px rgba(139, 92, 246, 0.4)' : 'none'
+                boxShadow: game.turn() === 'w' ? '0 0 10px rgba(139, 92, 246, 0.35)' : 'none'
               }}
             >
-              <div style={{ fontSize: '18px', marginBottom: '2px' }}>⚪</div>
-              <div style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold' }}>WHITE</div>
+              <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>WHITE</span>
             </div>
           </div>
         </div>
