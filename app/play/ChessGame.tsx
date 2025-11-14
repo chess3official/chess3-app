@@ -31,11 +31,13 @@ export default function ChessGame() {
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [alienzMode, setAlienzMode] = useState(false);
+  const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
   const [onlineMode, setOnlineMode] = useState(false);
   const [onlineGameId, setOnlineGameId] = useState('');
   const [onlineColor, setOnlineColor] = useState<'w' | 'b' | null>(null);
   const [onlineStatus, setOnlineStatus] = useState('');
   const [joinGameId, setJoinGameId] = useState('');
+  const [onlineColorPreference, setOnlineColorPreference] = useState<'w' | 'b' | 'random'>('random');
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -92,6 +94,24 @@ export default function ChessGame() {
       });
     }
   }, [game, vsAI, playerColor, aiDifficulty, aiThinking]);
+
+  // Keep board orientation in sync with who the user is playing as
+  useEffect(() => {
+    if (onlineMode) {
+      if (onlineColor === 'w') {
+        setBoardOrientation('white');
+      } else if (onlineColor === 'b') {
+        setBoardOrientation('black');
+      } else {
+        // While waiting for assignment, honor preferred color (default to white)
+        if (onlineColorPreference === 'b') setBoardOrientation('black');
+        else setBoardOrientation('white');
+      }
+    } else {
+      // Offline / vs AI: orient based on player's color
+      setBoardOrientation(playerColor === 'w' ? 'white' : 'black');
+    }
+  }, [onlineMode, onlineColor, onlineColorPreference, playerColor]);
 
   // Online mode: open / close WebSocket connection
   useEffect(() => {
@@ -438,6 +458,52 @@ export default function ChessGame() {
 
             {onlineMode && (
               <>
+                {/* Preferred color for online games */}
+                <div className="mb-2">
+                  <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '4px' }}>Preferred color</div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setOnlineColorPreference('w')}
+                      className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
+                      style={{
+                        background: onlineColorPreference === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.08)',
+                        color: '#ffffff',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                      }}
+                    >
+                      White
+                    </button>
+                    <button
+                      onClick={() => setOnlineColorPreference('b')}
+                      className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
+                      style={{
+                        background: onlineColorPreference === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.08)',
+                        color: '#ffffff',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                      }}
+                    >
+                      Black
+                    </button>
+                    <button
+                      onClick={() => setOnlineColorPreference('random')}
+                      className="flex-1 px-2 py-1 rounded-lg text-xs transition-all"
+                      style={{
+                        background: onlineColorPreference === 'random' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.08)',
+                        color: '#ffffff',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                      }}
+                    >
+                      Random
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex gap-2 mb-2">
                   <button
                     onClick={() => {
@@ -614,7 +680,7 @@ export default function ChessGame() {
                         fontSize: '11px'
                       }}
                     >
-                      ⚪ White
+                      White
                     </button>
                     <button
                       onClick={() => {
@@ -630,7 +696,7 @@ export default function ChessGame() {
                         fontSize: '11px'
                       }}
                     >
-                      ⚫ Black
+                      Black
                     </button>
                   </div>
                 </div>
@@ -658,30 +724,31 @@ export default function ChessGame() {
             New Game
           </button>
 
-          {/* Turn Indicators */}
-          <div className="flex gap-2.5 mt-2">
-            {/* Black Turn Indicator */}
-            <div 
-              className="flex-1 px-2 py-1 rounded-lg text-center transition-all"
-              style={{
-                background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
-                border: game.turn() === 'b' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: game.turn() === 'b' ? '0 0 10px rgba(139, 92, 246, 0.35)' : 'none'
-              }}
+          {/* Turn Indicator */}
+          <div className="mt-2">
+            <div style={{ color: '#a0a0a0', fontSize: '10px', marginBottom: '4px' }}>Current turn</div>
+            <div
+              className="flex rounded-full overflow-hidden border"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.15)', background: 'rgba(15, 23, 42, 0.6)' }}
             >
-              <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>BLACK</span>
-            </div>
-
-            {/* White Turn Indicator */}
-            <div 
-              className="flex-1 px-2 py-1 rounded-lg text-center transition-all"
-              style={{
-                background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
-                border: game.turn() === 'w' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: game.turn() === 'w' ? '0 0 10px rgba(139, 92, 246, 0.35)' : 'none'
-              }}
-            >
-              <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.05em' }}>WHITE</span>
+              <div
+                className="flex-1 px-2 py-1 text-center text-xs font-semibold transition-all"
+                style={{
+                  background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'transparent',
+                  color: game.turn() === 'w' ? '#ffffff' : '#a0a0a0',
+                }}
+              >
+                WHITE
+              </div>
+              <div
+                className="flex-1 px-2 py-1 text-center text-xs font-semibold transition-all"
+                style={{
+                  background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'transparent',
+                  color: game.turn() === 'b' ? '#ffffff' : '#a0a0a0',
+                }}
+              >
+                BLACK
+              </div>
             </div>
           </div>
         </div>
@@ -702,6 +769,7 @@ export default function ChessGame() {
               onSquareClick={onSquareClick}
               customSquareStyles={optionSquares}
               boardWidth={480}
+              boardOrientation={boardOrientation}
               customDarkSquareStyle={{ backgroundColor: '#3a3a3a' }}
               customLightSquareStyle={{ backgroundColor: '#e8e8e8' }}
               customPieces={alienzMode ? {
