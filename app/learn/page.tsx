@@ -6,10 +6,10 @@ import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 
 // Simple knight training exercise
-// Start: white king + knight vs bare king, white to move
+// Start: white king + white knight vs black king, white to move
 // Goal: move the knight onto the highlighted target square
 
-const KNIGHT_TRAINING_FEN = '8/8/8/8/4n3/8/8/4K3 w - - 0 1'; // white king e1, knight e4 (as white piece)
+const KNIGHT_TRAINING_FEN = '8/8/8/5k2/4N3/8/8/4K3 w - - 0 1'; // white king e1 (K), white knight e4 (N), black king f5 (k)
 const KNIGHT_TARGET_SQUARE = 'f6';
 
 export default function LearnPage() {
