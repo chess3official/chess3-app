@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
@@ -412,6 +413,21 @@ export default function ChessGame() {
 
   return (
     <>
+      <div className="flex items-center justify-between mb-4 px-4 max-w-5xl mx-auto">
+        <Link
+          href="/"
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
+          style={{
+            borderColor: 'rgba(148, 163, 184, 0.6)',
+            color: '#e5e7eb',
+            background: 'rgba(15,23,42,0.75)',
+          }}
+        >
+          ← Home
+        </Link>
+        <div />
+      </div>
+
       {/* Game Status at Top */}
       <div className="text-center mb-6">
         {game.isGameOver() ? (
