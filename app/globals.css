@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Chess3 Brand Colors */
+  --color-chess3-purple: #8B5CF6;
+  --color-chess3-purple-dark: #6D28D9;
+  --color-chess3-purple-light: #C4B5FD;
+  --color-chess3-green: #10B981;
+  --color-chess3-green-dark: #059669;
+  --color-chess3-green-light: #34D399;
+  
+  /* System Colors */
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  /* CSS Variables for use in styles */
+  --chess3-purple: #8B5CF6;
+  --chess3-purple-dark: #6D28D9;
+  --chess3-purple-light: #C4B5FD;
+  --chess3-green: #10B981;
+  --chess3-green-dark: #059669;
+  --chess3-green-light: #34D399;
+  
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: var(--chess3-purple);
+  --secondary: var(--chess3-green);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --card: #171717;
+    --card-foreground: #ededed;
+    --popover: #171717;
+    --popover-foreground: #ededed;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --accent: var(--chess3-purple-dark);
+    --accent-foreground: #ededed;
+    --border: #262626;
+    --input: #262626;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Chess3 Custom Styles */
+.gradient-chess3 {
+  background: linear-gradient(135deg, var(--chess3-purple-dark) 0%, var(--chess3-purple) 100%);
+}
+
+.gradient-chess3-reverse {
+  background: linear-gradient(135deg, var(--chess3-purple) 0%, var(--chess3-green) 100%);
+}
