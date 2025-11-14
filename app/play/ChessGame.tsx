@@ -258,25 +258,25 @@ export default function ChessGame() {
       </div>
 
       {/* Main Game Layout */}
-      <div className="flex gap-6 items-start justify-center">
+      <div className="flex gap-4 items-start justify-center">
         {/* Left Side - Controls & Turn Indicator */}
-        <div style={{ width: '280px' }}>
+        <div style={{ width: '210px' }}>
           {/* Alienz Mode Toggle */}
-          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
             <div className="flex items-center justify-between">
               <div>
-                <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '14px' }}>Alienz Mode</span>
-                <div style={{ color: '#a0a0a0', fontSize: '10px', marginTop: '2px' }}>Green vs Purple</div>
+                <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>Alienz Mode</span>
+                <div style={{ color: '#a0a0a0', fontSize: '9px', marginTop: '2px' }}>Green vs Purple</div>
               </div>
               <button
                 onClick={() => setAlienzMode(!alienzMode)}
-                className="px-3 py-1 rounded-lg transition-all"
+                className="px-2 py-1 rounded-lg transition-all"
                 style={{
-                  background: alienzMode ? 'linear-gradient(135deg, #10B981 0%, #8B5CF6 100%)' : 'rgba(255, 255, 255, 0.1)',
+                  background: alienzMode ? 'linear-gradient(135deg, #10B981 0%, #8B5CF6 100%)' : 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '12px'
+                  fontSize: '11px'
                 }}
               >
                 {alienzMode ? 'ON' : 'OFF'}
@@ -285,21 +285,21 @@ export default function ChessGame() {
           </div>
 
           {/* AI Controls */}
-          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <div className="flex items-center justify-between mb-3">
-              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '14px' }}>Play vs AI</span>
+          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>Play vs AI</span>
               <button
                 onClick={() => {
                   setVsAI(!vsAI);
                   handleNewGame();
                 }}
-                className="px-3 py-1 rounded-lg transition-all"
+                className="px-2 py-1 rounded-lg transition-all"
                 style={{
-                  background: vsAI ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                  background: vsAI ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '12px'
+                  fontSize: '11px'
                 }}
               >
                 {vsAI ? 'ON' : 'OFF'}
@@ -308,21 +308,21 @@ export default function ChessGame() {
             
             {vsAI && (
               <>
-                <div className="mb-3">
-                  <label style={{ color: '#a0a0a0', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Difficulty</label>
-                  <div className="flex gap-2">
+                <div className="mb-2">
+                  <label style={{ color: '#a0a0a0', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Difficulty</label>
+                  <div className="flex gap-1.5">
                     {(['easy', 'medium', 'hard'] as const).map((diff) => (
                       <button
                         key={diff}
                         onClick={() => setAiDifficulty(diff)}
-                        className="px-3 py-1 rounded-lg transition-all flex-1"
+                        className="px-2 py-1 rounded-lg transition-all flex-1"
                         style={{
-                          background: aiDifficulty === diff ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                          background: aiDifficulty === diff ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.08)',
                           color: '#ffffff',
                           border: 'none',
                           cursor: 'pointer',
                           textTransform: 'capitalize',
-                          fontSize: '12px'
+                          fontSize: '11px'
                         }}
                       >
                         {diff}
@@ -332,20 +332,20 @@ export default function ChessGame() {
                 </div>
                 
                 <div>
-                  <label style={{ color: '#a0a0a0', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Your Color</label>
-                  <div className="flex gap-2">
+                  <label style={{ color: '#a0a0a0', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Your Color</label>
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => {
                         setPlayerColor('w');
                         handleNewGame();
                       }}
-                      className="px-3 py-1 rounded-lg transition-all flex-1"
+                      className="px-2 py-1 rounded-lg transition-all flex-1"
                       style={{
-                        background: playerColor === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                        background: playerColor === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.08)',
                         color: '#ffffff',
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: '12px'
+                        fontSize: '11px'
                       }}
                     >
                       ⚪ White
@@ -355,13 +355,13 @@ export default function ChessGame() {
                         setPlayerColor('b');
                         handleNewGame();
                       }}
-                      className="px-3 py-1 rounded-lg transition-all flex-1"
+                      className="px-2 py-1 rounded-lg transition-all flex-1"
                       style={{
-                        background: playerColor === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
+                        background: playerColor === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.08)',
                         color: '#ffffff',
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: '12px'
+                        fontSize: '11px'
                       }}
                     >
                       ⚫ Black
@@ -370,7 +370,7 @@ export default function ChessGame() {
                 </div>
                 
                 {aiThinking && (
-                  <div className="mt-3 text-center" style={{ color: '#10B981', fontSize: '12px' }}>
+                  <div className="mt-2 text-center" style={{ color: '#10B981', fontSize: '11px' }}>
                     🤖 AI is thinking...
                   </div>
                 )}
@@ -381,43 +381,43 @@ export default function ChessGame() {
           {/* New Game Button */}
           <button
             onClick={handleNewGame}
-            className="w-full px-4 py-3 font-bold rounded-lg transition-all hover:scale-105 mb-4"
+            className="w-full px-3 py-2 text-sm font-semibold rounded-lg transition-all hover:scale-105 mb-3"
             style={{
               background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
               color: '#ffffff',
               border: 'none',
-              boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)'
+              boxShadow: '0 2px 12px rgba(139, 92, 246, 0.3)'
             }}
           >
             New Game
           </button>
 
           {/* Turn Indicators */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2.5">
             {/* Black Turn Indicator */}
             <div 
-              className="p-4 rounded-lg text-center transition-all"
+              className="px-2 py-2 rounded-lg text-center transition-all"
               style={{
                 background: game.turn() === 'b' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
-                border: game.turn() === 'b' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: game.turn() === 'b' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
+                border: game.turn() === 'b' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: game.turn() === 'b' ? '0 0 14px rgba(139, 92, 246, 0.4)' : 'none'
               }}
             >
-              <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚫</div>
-              <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>BLACK</div>
+              <div style={{ fontSize: '22px', marginBottom: '2px' }}>⚫</div>
+              <div style={{ color: '#ffffff', fontSize: '11px', fontWeight: 'bold' }}>BLACK</div>
             </div>
 
             {/* White Turn Indicator */}
             <div 
-              className="p-4 rounded-lg text-center transition-all"
+              className="px-2 py-2 rounded-lg text-center transition-all"
               style={{
                 background: game.turn() === 'w' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.05)',
-                border: game.turn() === 'w' ? '2px solid #8B5CF6' : '2px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: game.turn() === 'w' ? '0 0 20px rgba(139, 92, 246, 0.5)' : 'none'
+                border: game.turn() === 'w' ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: game.turn() === 'w' ? '0 0 14px rgba(139, 92, 246, 0.4)' : 'none'
               }}
             >
-              <div style={{ fontSize: '32px', marginBottom: '4px' }}>⚪</div>
-              <div style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}>WHITE</div>
+              <div style={{ fontSize: '22px', marginBottom: '2px' }}>⚪</div>
+              <div style={{ color: '#ffffff', fontSize: '11px', fontWeight: 'bold' }}>WHITE</div>
             </div>
           </div>
         </div>
@@ -553,18 +553,18 @@ export default function ChessGame() {
         </div>
 
         {/* Right Side - Timer & Controls */}
-        <div style={{ width: '280px' }}>
+        <div style={{ width: '210px' }}>
           {/* Timer */}
-          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <div className="mb-3">
-              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>Black</div>
+          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <div className="mb-2">
+              <div style={{ color: '#a0a0a0', fontSize: '11px', marginBottom: '2px' }}>Black</div>
               <div 
-                className="p-3 rounded-lg text-center"
+                className="p-2 rounded-lg text-center"
                 style={{
                   background: game.turn() === 'b' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                   border: game.turn() === 'b' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
                   color: blackTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
-                  fontSize: '28px',
+                  fontSize: '20px',
                   fontWeight: 'bold',
                   fontFamily: 'monospace'
                 }}
@@ -573,14 +573,14 @@ export default function ChessGame() {
               </div>
             </div>
             <div>
-              <div style={{ color: '#a0a0a0', fontSize: '12px', marginBottom: '4px' }}>White</div>
+              <div style={{ color: '#a0a0a0', fontSize: '11px', marginBottom: '2px' }}>White</div>
               <div 
-                className="p-3 rounded-lg text-center"
+                className="p-2 rounded-lg text-center"
                 style={{
                   background: game.turn() === 'w' && isTimerActive ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                   border: game.turn() === 'w' && isTimerActive ? '2px solid #8B5CF6' : '1px solid rgba(255, 255, 255, 0.1)',
                   color: whiteTime <= 10 && isTimerActive ? '#ef4444' : '#ffffff',
-                  fontSize: '28px',
+                  fontSize: '20px',
                   fontWeight: 'bold',
                   fontFamily: 'monospace'
                 }}
@@ -591,30 +591,30 @@ export default function ChessGame() {
           </div>
 
           {/* Time Control Selection */}
-          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            <label style={{ color: '#ffffff', fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Time Control</label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="mb-3 p-2 rounded-xl" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+            <label style={{ color: '#ffffff', fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Time Control</label>
+            <div className="grid grid-cols-2 gap-1.5">
               {(['1+0', '3+0', '5+0', '10+0', '15+10', '30+0', 'unlimited'] as TimeControl[]).map((tc) => (
                 <button
                   key={tc}
                   onClick={() => handleTimeControlChange(tc)}
                   disabled={gameStarted}
-                  className="px-3 py-2 rounded-lg transition-all"
+                  className="px-2 py-1.5 rounded-lg transition-all"
                   style={{
                     background: timeControl === tc ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',
                     border: 'none',
                     cursor: gameStarted ? 'not-allowed' : 'pointer',
                     opacity: gameStarted ? 0.5 : 1,
-                    fontSize: '11px',
+                    fontSize: '10px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '2px'
+                    gap: '1px'
                   }}
                 >
                   <span style={{ fontWeight: 'bold' }}>{tc === 'unlimited' ? '∞' : tc}</span>
-                  <span style={{ fontSize: '9px', opacity: 0.7 }}>{TIME_CONTROLS[tc].name}</span>
+                  <span style={{ fontSize: '8px', opacity: 0.7 }}>{TIME_CONTROLS[tc].name}</span>
                 </button>
               ))}
             </div>
