@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Old guide/setup files
+AI-BOT-GUIDE.md
+CHESS-COMPONENTS-GUIDE.md
+CHESS3-PROJECT-GUIDE.md
+GETTING-STARTED.md
+*-GUIDE.md
